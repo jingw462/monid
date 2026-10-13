@@ -1,0 +1,28 @@
+# Tasks: add-connector-openai
+
+## Connector implementation
+
+- [x] Inspect the six hosted Monid contracts and official native Images APIs.
+- [x] Add bearer-authenticated provider, long-request timeouts and USD pool.
+- [x] Add shared native field mirrors and public binding constraints.
+- [x] Add six fixed-model generation/edit endpoints and JSON reference mapping.
+- [x] Add per-token rate card, input-derived estimates and receipt evidence.
+- [x] Add size preflight and zero-billed vendor/malformed-response failures.
+- [x] Document native PNG base64 and the host artifact-storage integration seam.
+- [x] Register only the six new public identities in ids.lock.json.
+- [x] Add minimal shared synthetic fixtures and sealed-unit integration tests.
+- [x] Add one credential-gated live smoke test.
+
+## Verification
+
+- [x] Format/lint/typecheck the change and run its offline integration suite (35 pass).
+- [x] Run the full repository offline test suite (1288 passed, 0 failed, 216 credential-gated skips).
+- [x] Verify deterministic compilation, six catalog identities, pure estimate CLI and version gate.
+- [ ] Follow up existing ids.lock.json drift separately: 78 unregistered and
+      7 obsolete non-OpenAI identities in main; this port preserves existing entries.
+
+## Follow-up requiring private infrastructure or vendor credentials
+
+- [ ] Compare native mapping/estimates with the legacy monid-services adaptor.
+- [ ] Connect/verify hosted PNG persistence, image artifacts and seven-day URLs.
+- [ ] Run live vendor smoke tests and replace synthetic fixtures with sanitized recordings.

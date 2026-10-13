@@ -239,6 +239,14 @@ openspec/          spec-driven changes; the decision record
 config.yml         schema.* and compiler.* are contract; engine and scripts are tooling
 ```
 
+## OpenAI image endpoints
+
+[OpenAI images](connectors/openai/README.md) adds generation and editing for GPT
+Image 2, GPT Image 2.5 Sunburst and GPT Image 2.5 Flare. The six public
+identities use fixed models, one PNG per request and receipt-based token
+billing. See the connector guide for inputs, local use and the hosted
+artifact-storage integration boundary.
+
 ## Learn more
 
 - [DEVELOPMENT.md](./DEVELOPMENT.md) covers hooks, the compiler, usage and
