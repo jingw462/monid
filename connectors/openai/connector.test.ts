@@ -31,6 +31,8 @@ const REFERENCES = [
     "https://example.com/first.png",
     "https://example.com/second.jpg",
 ];
+const PNG_BASE64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII=";
 const EPSILON = 1e-12;
 
 async function fixture(name = "image-ok") {
@@ -233,6 +235,10 @@ for (const model of MODELS) {
                     { ...input, images: [] },
                     { ...input, images: Array(17).fill(REFERENCES[0]) },
                     { ...input, images: ["http://example.com/a.png"] },
+                    { ...input, images: ["https://?"] },
+                    { ...input, images: ["https://#"] },
+                    { ...input, mask: "https://?" },
+                    { ...input, mask: "https://#" },
                     { ...input, images: [{ image_url: REFERENCES[0] }] },
                     { ...input, mask: "data:image/png;base64,abc" },
                     Object.fromEntries(
@@ -256,6 +262,8 @@ for (const model of MODELS) {
 
 // Published calculator reference values, deliberately not calculated by the
 // implementation in these tests. Covers all tiers, orientation and round-even.
+// Near-half cases also pin the official calculator's floating-point evaluation
+// order: edge / (long / short), which can differ from edge * short / long.
 for (
     const [model, cases] of [
         ["gpt-image-2", [
@@ -267,12 +275,21 @@ for (
             ["2560x1024", "low", 111],
             ["2048x832", "low", 89],
             ["2048x960", "low", 127],
+            ["944x1536", "medium", 1201],
+            ["1536x944", "medium", 1201],
+            ["1888x3072", "medium", 2715],
         ]],
         ["gpt-image-2.5-sunburst", [
             ["1024x1024", "medium", 439],
             ["1024x1024", "high", 1756],
             ["1024x1024", "xhigh", 3122],
             ["1024x1024", "max", 7024],
+            ["944x1536", "high", 1201],
+            ["1536x944", "high", 1201],
+            ["784x2048", "xhigh", 1443],
+            ["2048x784", "xhigh", 1443],
+            ["1584x2048", "xhigh", 4112],
+            ["1968x2048", "xhigh", 5886],
             ["2560x1024", "medium", 278],
         ]],
         ["gpt-image-2.5-flare", [
@@ -280,6 +297,12 @@ for (
             ["1024x1024", "high", 1756],
             ["1024x1024", "xhigh", 3122],
             ["1024x1024", "max", 7024],
+            ["944x1536", "high", 1201],
+            ["1536x944", "high", 1201],
+            ["784x2048", "xhigh", 1443],
+            ["2048x784", "xhigh", 1443],
+            ["1584x2048", "xhigh", 4112],
+            ["1968x2048", "xhigh", 5886],
         ]],
     ] as const
 ) {
@@ -379,7 +402,7 @@ Deno.test("openai: a 2xx in-body error is a zero-billed provider failure", async
 
 Deno.test("openai: absent images and incomplete/invalid meters never bill", async () => {
     const unit = await testSealedUnit("openai#v1/image/gpt-image-2");
-    const image = { data: [{ b64_json: "synthetic-png" }] };
+    const image = { data: [{ b64_json: PNG_BASE64 }] };
     const receipt = {
         usage: {
             input_tokens_details: { text_tokens: 20, image_tokens: 0 },
@@ -391,6 +414,11 @@ Deno.test("openai: absent images and incomplete/invalid meters never bill", asyn
             {},
             { ...receipt, data: [] },
             { ...receipt, data: [{ b64_json: "" }] },
+            { ...receipt, data: [{ b64_json: " " }] },
+            { ...receipt, data: [{ b64_json: "not-base64!" }] },
+            { ...receipt, data: [{ b64_json: "aGVsbG8=" }] },
+            { ...receipt, data: [{ b64_json: PNG_BASE64.slice(0, -1) }] },
+            { ...receipt, data: [{ b64_json: PNG_BASE64 + "====" }] },
             {
                 ...receipt,
                 data: [{ url: "https://example.com/invalid-response.png" }],
@@ -419,7 +447,7 @@ Deno.test("openai: absent images and incomplete/invalid meters never bill", asyn
 Deno.test("openai: settlement uses actual tokens even when estimate differs; no 1K rounding", async () => {
     const unit = await testSealedUnit("openai#v1/image/gpt-image-2");
     const body = {
-        data: [{ b64_json: "synthetic-png" }],
+        data: [{ b64_json: PNG_BASE64 }],
         usage: {
             input_tokens_details: { text_tokens: 1, image_tokens: 1 },
             output_tokens: 1,
@@ -450,7 +478,7 @@ Deno.test("openai: maximum reference count preserves order and optional mask is 
                 sent = JSON.parse(String(init?.body));
                 return Promise.resolve(
                     Response.json({
-                        data: [{ b64_json: "synthetic-png" }],
+                        data: [{ b64_json: PNG_BASE64 }],
                         usage: {
                             input_tokens_details: {
                                 text_tokens: 1,

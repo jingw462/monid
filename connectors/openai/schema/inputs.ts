@@ -46,8 +46,8 @@ export const zEditBody = zGenerateBody.extend({
 /** The Monid facade accepts URL strings, unlike the native JSON objects.
  * This narrowing belongs to the endpoint binding, not the vendor mirror.
  */
-export const zPublicImageUrl = z.string().min(1).regex(
-    /^https:\/\/[^\s/]+(?:\/[^\s]*)?$/,
+export const zPublicImageUrl = z.url({ protocol: /^https$/ }).regex(
+    /^https:\/\/[^\s/?#]+(?:[/?#][^\s]*)?$/,
 )
     .describe("Public HTTPS URL of a PNG, WEBP or JPG under 50 MB.");
 export const zPublicImages = z.array(zPublicImageUrl).min(1).max(16).describe(

@@ -16,8 +16,12 @@
 ## Verification
 
 - [x] Format/lint/typecheck the change and run its offline integration suite (35 pass).
-- [x] Run the full repository offline test suite (1288 passed, 0 failed, 216 credential-gated skips).
+- [x] Run the full repository offline test suite (1294 passed, 0 failed, 216 skipped).
 - [x] Verify deterministic compilation, six catalog identities, pure estimate CLI and version gate.
+- [x] Review calculator evaluation order, malformed PNG/Base64 responses and empty-host URLs;
+      add regression cases and rerun the full offline suite on 2026-10-17.
+- [x] Compare all six compiled output estimators with the current official calculator
+      across 757796 valid size/quality combinations (zero differences).
 - [ ] Follow up existing ids.lock.json drift separately: 78 unregistered and
       7 obsolete non-OpenAI identities in main; this port preserves existing entries.
 

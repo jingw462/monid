@@ -54,8 +54,9 @@ Successful billing SHALL use the native receipt, never the admission estimate.
   credits and evidence; a 2xx in-body error SHALL become a 502
 
 #### Scenario: Missing or invalid receipt is not a successful paid run
-- **WHEN** a 2xx has no nonempty b64_json image or its text/image/output token
-  counts are missing, negative, non-integer or non-numeric
+- **WHEN** a 2xx has no b64_json image with valid Base64 syntax and a PNG
+  signature, or its text/image/output token counts are missing, negative,
+  non-integer or non-numeric
 - **THEN** the run SHALL return invalid_response with 502 and zero usage
 
 ### Requirement: Estimates use input-derived counts

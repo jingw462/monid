@@ -74,8 +74,8 @@ export default defineEndpoint({
             }
             const grid = { low: 16, medium: 24, high: 48, xhigh: 64, max: 96 };
             const longEdge = grid[body.quality];
-            const shortExact = longEdge * Math.min(width, height) /
-                Math.max(width, height);
+            const shortExact = longEdge /
+                (Math.max(width, height) / Math.min(width, height));
             const floor = Math.floor(shortExact);
             const shortEdge = shortExact - floor === 0.5
                 ? floor + floor % 2

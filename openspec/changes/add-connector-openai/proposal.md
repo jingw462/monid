@@ -26,7 +26,7 @@ execute those public identities with native OpenAI credentials.
 
 This is a connector-only change: no engine ABI, schemas, version or existing
 provider changes. Sources are the six hosted `inspect` documents and official
-OpenAI documentation checked 2026-10-11. The private `monid-services` adaptor
+OpenAI documentation checked 2026-10-17. The private `monid-services` adaptor
 could not be read. Output therefore preserves native `data[].b64_json` and
 usage. Hosted `image` artifact persistence and seven-day signed URLs remain the
 host application's responsibility; their legacy behavior must be verified

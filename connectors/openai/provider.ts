@@ -25,7 +25,7 @@ export default defineProvider({
         /** Preflight cross-field size constraints in executable code: Zod
          * refinements do not survive the inert JSON Schema compilation.
          * Then relay one blocking JSON call. A malformed 2xx cannot become a
-         * successful, billable run without both a PNG and a usage receipt.
+         * successful, billable run without PNG-shaped base64 and a usage receipt.
          */
         start: async ({ data, utils, logger }) => {
             const size = utils.json.str(data.input.body ?? {}, "$.size");
@@ -86,7 +86,9 @@ export default defineProvider({
                     item !== null && typeof item === "object" &&
                     !Array.isArray(item) &&
                     typeof item.b64_json === "string" &&
-                    item.b64_json.length > 0
+                    item.b64_json.length % 4 === 0 &&
+                    item.b64_json.startsWith("iVBORw0KGgo") &&
+                    /^[A-Za-z0-9+/]+={0,2}$/.test(item.b64_json)
                 );
             const validUsage = [text, image, output].every((count) =>
                 typeof count === "number" && Number.isSafeInteger(count) &&

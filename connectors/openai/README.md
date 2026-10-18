@@ -40,13 +40,18 @@ priced per token, with no rounding up to thousand-token blocks. Successful
 settlement reads `usage.input_tokens_details.{text_tokens,image_tokens}` and
 `usage.output_tokens`, before any presentation changes. HTTP failures and
 in-body errors bill zero. A success missing image data or a complete,
-nonnegative integer receipt becomes a 502 with zero usage.
+nonnegative integer receipt becomes a 502 with zero usage. Image checks cover
+Base64 syntax and the PNG signature; full decoding and image dimensions remain
+part of host artifact validation.
 
 The output estimate reproduces the official calculator: the long latent edge is
 16/48/96 for Image 2's low/medium/high and 16/24/48/64/96 for Image 2.5's
 low/medium/high/xhigh/max. Divide by the image aspect ratio and round the short
 edge to the nearest integer, with ties to even. Output tokens are
-`ceil(longEdge * shortEdge * (2_000_000 + width * height) / 4_000_000)`.
+`ceil(longEdge * shortEdge * (2_000_000 + width * height) / 4_000_000)`. The
+short edge preserves the calculator's evaluation order,
+`longEdge / (max(width, height) / min(width, height))`, because algebraically
+equivalent multiplication can round differently near half-way boundaries.
 
 Prompt UTF-8 byte count approximates text tokens conservatively without loading
 a tokenizer. Reference estimates reserve 1,500 tokens per URL image, following
@@ -100,7 +105,7 @@ once vendor credentials and the legacy adaptor are available.
 ## Sources
 
 - Six public contracts: `monid inspect -p openai -e <public path> --json`,
-  checked 2026-10-11.
+  checked 2026-10-17.
 - [Native generation JSON API](https://developers.openai.com/api/reference/resources/images/methods/generate).
 - [Native edit JSON API](https://developers.openai.com/api/reference/resources/images/methods/edit).
 - [Image generation guide, token calculator and cached-input scope](https://developers.openai.com/api/docs/guides/image-generation).
