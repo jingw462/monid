@@ -310,7 +310,7 @@ for (
 Deno.test("openai: UTF-8 prompt estimate handles Chinese, emoji and a lone surrogate", async () => {
     const unit = await testSealedUnit("openai#v1/image/gpt-image-2");
     const estimate = await estimateEndpoint(unit, {
-        body: { ...INPUT, prompt: "a猫🐶\ud800" },
+        body: { ...INPUT, prompt: "a\u732b\u{1f436}\ud800" },
     });
     assertEquals(estimate.evidence.input_text_token, 11);
 });
