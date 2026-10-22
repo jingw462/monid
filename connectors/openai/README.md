@@ -29,8 +29,11 @@ content.
 Every request fixes `model`, `n: 1`, `output_format: "png"` and `stream: false`.
 Unknown body keys are rejected. Sizes must have 16px-aligned edges, maximum edge
 3840px, aspect ratio no greater than 3:1, and 655,360–8,294,400 total pixels.
-The executable lifecycle checks these cross-field rules before egress; the pure
-estimate rejects the same invalid sizes. JSON Schema carries the size syntax.
+The executable lifecycle checks these cross-field rules before egress and
+returns a zero-billed `400 invalid_size`. JSON Schema carries the size syntax.
+The pure estimate tolerates unsupported dimensions so callers that estimate
+before execution still reach that error; non-finite output counts become zero.
+An estimate does not certify that the dimensions are valid.
 
 ## Billing and estimates
 
@@ -44,10 +47,18 @@ nonnegative integer receipt becomes a 502 with zero usage. Image checks cover
 Base64 syntax and the PNG signature; full decoding and image dimensions remain
 part of host artifact validation.
 
-The output estimate reproduces the official calculator: the long latent edge is
-16/48/96 for Image 2's low/medium/high and 16/24/48/64/96 for Image 2.5's
-low/medium/high/xhigh/max. Divide by the image aspect ratio and round the short
-edge to the nearest integer, with ties to even. Output tokens are
+The rate card is a provider default. Receipt evidence is implemented once in
+`provider.ts` and explicitly bound by all six endpoints: the compiler requires
+doc-level hooks for models with multiple metered components. All six estimates
+share one typed, provider-local factory in `schema/usage.ts`; the existing
+`preset` carrier serializes the quality grid and reference flag as arguments
+without adding shared-core presets or changing the engine ABI.
+
+For valid dimensions, the output estimate reproduces the official calculator:
+the long latent edge is 16/48/96 for Image 2's low/medium/high and
+16/24/48/64/96 for Image 2.5's low/medium/high/xhigh/max. Divide by the image
+aspect ratio and round the short edge to the nearest integer, with ties to even.
+Output tokens are
 `ceil(longEdge * shortEdge * (2_000_000 + width * height) / 4_000_000)`. The
 short edge preserves the calculator's evaluation order,
 `longEdge / (max(width, height) / min(width, height))`, because algebraically
@@ -91,16 +102,18 @@ This command contacts OpenAI and costs money. Offline validation requires no key
 or network:
 
 ```sh
-deno test --allow-read --allow-env --allow-write connectors/openai/connector.test.ts
+deno test --allow-read --allow-env --allow-write connectors/openai
 deno task check
 deno task test
 ```
 
 Fixtures are synthetic, shared provider-level chains. The tiny PNG only
-represents the native payload shape; it is not a live model result. The single
-live smoke test runs only when OpenAI credentials are present and network
-permissions are enabled. Replace synthetic fixtures with sanitized recordings
-once vendor credentials and the legacy adaptor are available.
+represents the native payload shape; it is not a live model result. Each
+endpoint has a live smoke test gated on OpenAI credentials; live tests require
+network permissions. Running the full live suite makes six paid calls; edit
+tests use a public reference image from the official image-generation guide.
+Replace synthetic fixtures with sanitized recordings once vendor credentials and
+the legacy adaptor are available.
 
 ## Sources
 

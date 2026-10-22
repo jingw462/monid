@@ -1,4 +1,5 @@
 import { defineEndpoint } from "@shared/core";
+import { imageEvidence } from "../../provider.ts";
 import {
     zEditBody,
     zImage25Quality,
@@ -6,9 +7,17 @@ import {
     zPublicImages,
     zPublicMask,
 } from "../../schema/inputs.ts";
-import { imageUsageModel } from "../../schema/usage.ts";
+import { imageEstimate, type ImageUsageModel } from "../../schema/usage.ts";
 
-export default defineEndpoint({
+// Price-setting knobs are required at the binding (D25).
+const zBody = zEditBody.required({ size: true, quality: true }).extend({
+    size: zImageSize,
+    quality: zImage25Quality,
+    images: zPublicImages,
+    mask: zPublicMask.optional(),
+});
+
+export default defineEndpoint<ImageUsageModel, typeof zBody>({
     meta: {
         displayName: "GPT Image 2.5 Sunburst Edit",
         summary:
@@ -35,15 +44,11 @@ export default defineEndpoint({
     request: { method: "POST", path: "/v1/images/edits" },
     input: {
         schema: {
-            // Price-setting knobs are required at the binding (D25).
-            body: zEditBody.required({ size: true, quality: true }).extend({
-                size: zImageSize,
-                quality: zImage25Quality,
-                images: zPublicImages,
-                mask: zPublicMask.optional(),
-            }),
+            body: zBody,
         },
         toRequest: ({ data, utils }) => {
+            // toRequest uses raw Json typing; the fallback and array guard bridge
+            // the schema-validated body without changing the shared hook ABI.
             const body = data.input.body ?? {};
             const mask = utils.json.optionalStr(body, "$.mask");
             const images = utils.json.get(body, "$.images");
@@ -68,73 +73,13 @@ export default defineEndpoint({
         },
     },
     usage: {
-        model: imageUsageModel,
-        /** Official calculator: model-specific latent edge, short-edge
-         * round-to-even, then ceil(patches * (2M + pixels) / 4M).
-         * https://developers.openai.com/api/docs/guides/image-generation
-         * Prompt bytes approximate a conservative text-token budget without
-         * fetching a tokenizer; URL inputs use Monid's documented 1,500 allowance.
-         */
-        estimate: ({ data }) => {
-            const body = data.input.body;
-            const [width, height] = body.size.split("x").map(Number);
-            const pixels = width * height;
-            if (
-                !Number.isSafeInteger(width) || !Number.isSafeInteger(height) ||
-                width % 16 !== 0 || height % 16 !== 0 ||
-                Math.max(width, height) > 3840 ||
-                Math.max(width, height) / Math.min(width, height) > 3 ||
-                pixels < 655360 || pixels > 8294400
-            ) {
-                throw new Error("invalid_size: unsupported output dimensions");
-            }
-            const grid = { low: 16, medium: 24, high: 48, xhigh: 64, max: 96 };
-            const longEdge = grid[body.quality];
-            const shortExact = longEdge /
-                (Math.max(width, height) / Math.min(width, height));
-            const floor = Math.floor(shortExact);
-            const shortEdge = shortExact - floor === 0.5
-                ? floor + floor % 2
-                : Math.round(shortExact);
-            const outputTokens = Math.ceil(
-                longEdge * shortEdge * (2000000 + pixels) / 4000000,
-            );
-            let promptBytes = 0;
-            for (const character of body.prompt) {
-                const code = character.codePointAt(0) ?? 0;
-                promptBytes += code <= 0x7f
-                    ? 1
-                    : code <= 0x7ff
-                    ? 2
-                    : code <= 0xffff
-                    ? 3
-                    : 4;
-            }
-            return {
-                counts: {
-                    input_text_token: promptBytes,
-                    input_image_token: 1500 *
-                        (body.images.length +
-                            (body.mask === undefined ? 0 : 1)),
-                    output_image_token: outputTokens,
-                },
-            };
-        },
-        evidence: ({ data, utils }) => ({
-            counts: {
-                input_text_token: utils.json.num(
-                    data.output,
-                    "$.usage.input_tokens_details.text_tokens",
-                ),
-                input_image_token: utils.json.num(
-                    data.output,
-                    "$.usage.input_tokens_details.image_tokens",
-                ),
-                output_image_token: utils.json.num(
-                    data.output,
-                    "$.usage.output_tokens",
-                ),
-            },
-        }),
+        evidence: imageEvidence,
+        estimate: imageEstimate({
+            low: 16,
+            medium: 24,
+            high: 48,
+            xhigh: 64,
+            max: 96,
+        }, true),
     },
 });

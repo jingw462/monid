@@ -1,4 +1,28 @@
-import { defineProvider, presets } from "@shared/core";
+import { defineProvider, presets, type UsageEvidenceFn } from "@shared/core";
+import { imageUsageModel } from "./schema/usage.ts";
+
+/** Standard direct Images API rate table, checked 2026-10-17:
+ * https://developers.openai.com/api/docs/pricing#image-generation-models
+ * These rates also match Monid's six published OpenAI endpoint cards.
+ */
+export const imageEvidence = (
+    { data, utils }: Parameters<UsageEvidenceFn>[0],
+) => ({
+    counts: {
+        input_text_token: utils.json.num(
+            data.output,
+            "$.usage.input_tokens_details.text_tokens",
+        ),
+        input_image_token: utils.json.num(
+            data.output,
+            "$.usage.input_tokens_details.image_tokens",
+        ),
+        output_image_token: utils.json.num(
+            data.output,
+            "$.usage.output_tokens",
+        ),
+    },
+});
 
 export default defineProvider({
     name: "openai",
@@ -20,7 +44,11 @@ export default defineProvider({
     auth: { inject: presets.auth.bearer() },
     request: { baseUrl: "https://api.openai.com" },
     timeouts: { requestMs: 180_000, runMs: 240_000 },
-    usage: { credits: { default: { label: "US dollars" } } },
+    usage: {
+        credits: { default: { label: "US dollars" } },
+        model: imageUsageModel,
+        evidence: imageEvidence,
+    },
     lifecycle: {
         /** Preflight cross-field size constraints in executable code: Zod
          * refinements do not survive the inert JSON Schema compilation.

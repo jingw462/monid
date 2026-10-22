@@ -15,12 +15,13 @@ execute those public identities with native OpenAI credentials.
   inputs; edits accept 1–16 HTTPS references and an optional mask.
 - Pin the model and one PNG per request; map reference URL strings into the
   native Images API's JSON objects.
-- Model all three token-rate lines; estimate output tokens using the official
-  calculator and settle on actual native token receipts.
-- Reject unsupported dimensions before egress. Relay vendor failures at zero
-  usage; reject malformed successful envelopes instead of silently billing.
-- Add shared synthetic fixtures, sealed-unit integration tests and a gated
-  live smoke test. Document native output and hosted integration requirements.
+- Model all three token-rate lines; share one typed estimate factory across the
+  six bindings and settle on actual native token receipts with shared evidence.
+- Reject unsupported dimensions before egress with 400 invalid_size. Admission
+  estimates tolerate these inputs so the lifecycle can return that error. Relay
+  vendor failures at zero usage; reject malformed successful envelopes.
+- Add shared synthetic fixtures, sealed-unit integration tests and gated
+  live smoke tests. Document native output and hosted integration requirements.
 
 ## Scope and migration limit
 

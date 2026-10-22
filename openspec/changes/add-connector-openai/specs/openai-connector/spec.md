@@ -34,8 +34,9 @@ rejected. Every wire request SHALL fix n=1, PNG encoding and streaming=false.
 #### Scenario: Invalid dimensions never contact OpenAI
 - **WHEN** a size violates 16px alignment, 3840px maximum edge, 3:1 maximum
   aspect ratio or the inclusive 655360–8294400 pixel range
-- **THEN** execution SHALL return an uncharged invalid_size error without IO,
-  and estimation SHALL reject the same dimensions
+- **THEN** an admission estimate SHALL return finite counts without IO or a
+  function-contract error, and subsequent execution SHALL return an uncharged
+  400 invalid_size error without IO
 
 ### Requirement: Token-based standard-rate billing
 The rate card SHALL have input_text_token at $0.000005, input_image_token at
